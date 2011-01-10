@@ -3,6 +3,7 @@ import re
 
 class ActiveWindow:
 
+    #Taken from: http://stackoverflow.com/questions/3983946/get-active-window-title-in-x
     def get_active_window_title(self):
         root_check = ''
         root = Popen(['xprop', '-root'],  stdout=PIPE)
@@ -27,6 +28,14 @@ class ActiveWindow:
                     return match.group("name")
         return "Unknown"
 
+    def monitor_active_window(self):
+        logfile="activewindow.log"
+        logfilehandle = open(logfile, "a")
+        
+        for line in logfilehandle:
+            last=line
+
+        print last
 
 aw = ActiveWindow()
 
