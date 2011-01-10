@@ -1,0 +1,5 @@
+Active Window
+
+A script to monitor your currently active window with the help of xprop and record changes to a file.
+
+Will later add visualisation and break down of your application usage.
