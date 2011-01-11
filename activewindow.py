@@ -30,15 +30,20 @@ class ActiveWindow:
 
     def monitor_active_window(self):
         logfile="activewindow.log"
-        logfilehandle = open(logfile, "a")
-        
-        for line in logfilehandle:
-            last=line
+        logfilehandle = open(logfile, "ra")
 
-        print last
+        lastline = None 
+        for line in logfilehandle:
+            lastline=line
+
+        lastwindow = None
+        if lastline is not None:
+            m = re.match("([0-9]+) (.*)", lastline)
+            lastwindow = m.group(2)
+
 
 aw = ActiveWindow()
 
-print aw.get_active_window_title()
+aw.monitor_active_window()
 
 
