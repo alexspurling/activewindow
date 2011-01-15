@@ -1,5 +1,7 @@
 from subprocess import Popen, PIPE
 import re
+import time
+import datetime
 
 class ActiveWindow:
 
@@ -27,20 +29,32 @@ class ActiveWindow:
                 if type == "STRING" or type == "COMPOUND_TEXT":
                     return match.group("name")
         return "Unknown"
+        
+    def get_current_time(self):
+        return "%d" % (time.time() * 1000)
+        
+    def log_window(self, f, currentwindow):
+        logstring = "%s %s\n" % (self.get_current_time(), currentwindow)
+        f.write(logstring)
+        f.flush()
 
     def monitor_active_window(self):
         logfile="activewindow.log"
-        logfilehandle = open(logfile, "ra")
+        with open(logfile, "a+") as f:
 
-        lastline = None 
-        for line in logfilehandle:
-            lastline=line
-
-        lastwindow = None
-        if lastline is not None:
-            m = re.match("([0-9]+) (.*)", lastline)
-            lastwindow = m.group(2)
-
+            lastwindow = None
+            
+            try:
+                while True:
+                    currentwindow = self.get_active_window_title()
+                    if currentwindow != lastwindow:
+                        self.log_window(f, currentwindow)
+                        lastwindow = currentwindow
+                    
+                    time.sleep(1)
+            except KeyboardInterrupt:
+                self.log_window(f, "ActiveWindow terminated")
+                print ""
 
 aw = ActiveWindow()
 
