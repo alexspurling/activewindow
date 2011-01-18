@@ -7,27 +7,22 @@ class ActiveWindow:
 
     #Taken from: http://stackoverflow.com/questions/3983946/get-active-window-title-in-x
     def get_active_window_title(self):
-        root_check = ''
-        root = Popen(['xprop', '-root'],  stdout=PIPE)
+        root = Popen(['xprop', '-root', '_NET_ACTIVE_WINDOW'], stdout=PIPE)
 
-        if root.stdout != root_check:
-            root_check = root.stdout
+        for line in root.stdout:
+            m = re.search('^_NET_ACTIVE_WINDOW.* ([\w]+)$', line)
+            if m != None:
+                id_ = m.group(1)
+                id_w = Popen(['xprop', '-id', id_, 'WM_NAME'], stdout=PIPE)
+                break
 
-        for i in root.stdout:
-            if '_NET_ACTIVE_WINDOW(WINDOW):' in i:
-                id_ = i.split()[4]
-                id_w = Popen(['xprop', '-id', id_], stdout=PIPE)
-        id_w.wait()
-        buff = []
-        for j in id_w.stdout:
-            buff.append(j)
-
-        for line in buff:
-            match = re.match("WM_NAME\((?P<type>.+)\) = (?P<name>.+)", line)
-            if match != None:
-                type = match.group("type")
-                if type == "STRING" or type == "COMPOUND_TEXT":
+        if id_w != None:
+            id_w.wait()
+            for line in id_w.stdout:
+                match = re.match("WM_NAME\([A-Z]+\) = (?P<name>.+)$", line)
+                if match != None:
                     return match.group("name")
+
         return "Unknown"
         
     def get_current_time(self):
