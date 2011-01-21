@@ -1,4 +1,5 @@
 from subprocess import Popen, PIPE
+import os
 import re
 import time
 import datetime
@@ -21,32 +22,40 @@ class ActiveWindow:
 
         if id_w != None:
             for line in id_w.stdout:
-                match = re.match("_NET_WM_PID\([A-Z]+\) = (?P<pid>.+)$", line)
+                match = re.match("_NET_WM_PID\(\w+\) = (?P<pid>.+)$", line)
                 if match != None:
                     pid = match.group("pid")
 
-                match = re.match("WM_NAME\([A-Z]+\) = (?P<name>.+)$", line)
+                match = re.match("WM_NAME\(\w+\) = \"(?P<name>.+)\"$", line)
                 if match != None:
                     name = match.group("name")
 
         return (pid, name)
 
-    def get_process_name_from_id(self, processid):
+    def get_process_command_from_id(self, processid):
         if processid == 0:
             return ""
 
-        with open("/proc/%s/stat" % processid, "r") as f:
-            processstat = f.readline()
+        command = os.readlink("/proc/%s/exe" % processid)
+        return command
 
-        match = re.match("^%s ([^\s]*) .*" % processid, processstat)
-        processname = match.group(1)
-        return processname
+    def escape(self, str):
+        #Surround the string in double quotes and escape any pre-existing double quotes
+        return '"%s"' % str.replace("\"", "\\\"")
+
+    def unescape(self, str):
+        #Remove surrounding double quotes and replace escaped double quotes
+        m = re.match("^\"(.*)\"$", a)
+        if m != None:
+            str = m.group(1)
+
+        return str.replace("\"", "\\\"")
         
     def get_current_time(self):
         return "%d" % (time.time() * 1000)
         
-    def log_window(self, f, currentprocess, currentwindow):
-        logstring = "%s %s %s\n" % (self.get_current_time(), currentprocess, currentwindow)
+    def log_window(self, f, currentcommand, currentwindow):
+        logstring = "%s %s %s\n" % (self.get_current_time(), self.escape(currentcommand), self.escape(currentwindow))
         f.write(logstring)
         f.flush()
 
@@ -60,13 +69,13 @@ class ActiveWindow:
                 while True:
                     curpid, currentwindow = self.get_active_window()
                     if currentwindow != lastwindow:
-                        currentprocess = self.get_process_name_from_id(curpid)
-                        self.log_window(f, currentprocess, currentwindow)
+                        currentcommand = self.get_process_command_from_id(curpid)
+                        self.log_window(f, currentcommand, currentwindow)
                         lastwindow = currentwindow
                     
                     time.sleep(1)
             except KeyboardInterrupt:
-                self.log_window(f, "(activewindow)", "ActiveWindow terminated")
+                self.log_window(f, 'activewindow', 'ActiveWindow terminated')
                 print ""
 
 aw = ActiveWindow()

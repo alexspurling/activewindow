@@ -38,18 +38,20 @@ def record_window_time(titlestr, time):
         windowtimes[titletoken] = totaltime
 
 for line in f:
-        
-    m = re.search('([0-9]+) (.*)', line)
 
-    curtime = long(m.group(1))
-    title = m.group(2)
+    m = re.match('^([0-9]+) "(.*[^\\\\"])" "(.*)"$', line)
 
-    if lasttime != 0:
-        time = curtime - lasttime
-        record_window_time(title, time)
-        print "title: %s time: %s" % (title, time)
-    
-    lasttime = curtime
+    if m != None:
+        curtime = long(m.group(1))
+        command = m.group(2)
+        title = m.group(3)
+
+        if lasttime != 0:
+            time = curtime - lasttime
+            print "Title: %s time: %s" % (title, time)
+            record_window_time(title, time)
+
+        lasttime = curtime
 
 
 sortedtimes = sorted(windowtimes.iteritems(), key=itemgetter(1), reverse=True)
